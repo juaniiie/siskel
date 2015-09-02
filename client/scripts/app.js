@@ -5,7 +5,7 @@ var Movie = Backbone.Model.extend({
   },
 
   toggleLike: function() {
-    // your code here
+    this.set( 'like', !this.get( 'like' ) );
   }
 
 });
@@ -15,13 +15,39 @@ var Movies = Backbone.Collection.extend({
   model: Movie,
 
   initialize: function() {
-    // your code here
+    this.on( 'change', this.sort);
+    this.comparator.field = 'title';
+    this.comparator.order = 'regular';
   },
 
-  comparator: 'title',
+  comparator: function(a, b) {
+    if(a.get(this.comparator.field) < b.get(this.comparator.field)) {
+      if(this.comparator.order === 'regular') {
+        return -1;
+      } else if(this.comparator.order === 'reverse') {
+        return 1;
+      }
+    } else if(a.get(this.comparator.field) > b.get(this.comparator.field)) {
+      if(this.comparator.order === 'regular') {
+        return 1;
+      } else if(this.comparator.order === 'reverse') {
+        return -1;
+      }
+    }
+    return 0;
+  },
 
   sortByField: function(field) {
-    // your code here
+    if(this.comparator.field !== field) {
+      this.comparator.field = field;
+    } else {
+      if(this.comparator.order === 'regular') {
+        this.comparator.order = 'reverse';
+      } else if(this.comparator.order === 'reverse'){
+        this.comparator.order = 'regular';
+      }
+    }
+    this.sort();
   }
 
 });
@@ -32,8 +58,8 @@ var AppView = Backbone.View.extend({
     'click form input': 'handleClick'
   },
 
-  handleClick: function(e) {
-    var field = $(e.target).val();
+  handleClick: function(event) {
+    var field = $(event.target).val();
     this.collection.sortByField(field);
   },
 
@@ -58,7 +84,7 @@ var MovieView = Backbone.View.extend({
                         </div>'),
 
   initialize: function() {
-    // your code here
+    this.model.on( 'change', this.render, this );
   },
 
   events: {
@@ -66,7 +92,7 @@ var MovieView = Backbone.View.extend({
   },
 
   handleClick: function() {
-    // your code here
+    this.model.toggleLike( );
   },
 
   render: function() {
@@ -76,10 +102,10 @@ var MovieView = Backbone.View.extend({
 
 });
 
-var MoviesView = Backbone.View.extend({
+var MoviesView = Backbone.View.extend({ //moviesView
 
   initialize: function() {
-    // your code here
+    this.collection.on( 'sort', this.render, this )
   },
 
   render: function() {
